@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>智能导览 - 景点简介弹窗</title>
+<style>
+body { margin:0; font-family:"Microsoft YaHei"; }
+.map-container { display:flex; height:100vh; }
+.sidebar {
+    width:260px;
+    background:rgba(0,0,0,0.8);
+    color:white;
+    padding:10px;
+}
+.spot { padding:12px; cursor:pointer; border-bottom:1px solid #444; position: relative; }
+.spot:hover { background: rgba(0,255,255,0.3); }
+.desc-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    padding: 2px 6px;
+    background:#1E90FF;
+    color:white;
+    border:none;
+    border-radius:3px;
+    cursor:pointer;
+}
+.desc-btn:hover { background:#63B8FF; }
+#map { flex:1; }
+
+.info-container { display:flex; align-items:flex-start; }
+.info-img { width:220px; height:150px; object-fit:cover; border:2px solid #fff; margin-right:10px; }
+.info-text { color:#000; max-width:200px; text-align:left; font-size:14px; }
+
+#descModal {
+    display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;
+}
+#descModal div {
+    background:white; padding:20px; max-width:400px; max-height:70%; overflow-y:auto; border-radius:6px; position:relative;
+}
+#closeModal { position:absolute; top:5px; right:10px; cursor:pointer; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="map-container">
+    <div class="sidebar">
+        <h3>景点导航</h3>
+        <div class="spot" onclick="focusSpot(0)">承德避暑山庄
+            <button class="desc-btn" onclick="showSpotDesc(event,0)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(1)">金山岭长城
+            <button class="desc-btn" onclick="showSpotDesc(event,1)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(2)">娲皇宫
+            <button class="desc-btn" onclick="showSpotDesc(event,2)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(3)">广府古城
+            <button class="desc-btn" onclick="showSpotDesc(event,3)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(4)">山海关
+            <button class="desc-btn" onclick="showSpotDesc(event,4)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(5)">普宁寺
+            <button class="desc-btn" onclick="showSpotDesc(event,5)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(6)">西柏坡
+            <button class="desc-btn" onclick="showSpotDesc(event,6)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(7)">清东陵
+            <button class="desc-btn" onclick="showSpotDesc(event,7)">简介</button>
+        </div>
+        <div class="spot" onclick="focusSpot(8)">扁鹊祠
+            <button class="desc-btn" onclick="showSpotDesc(event,8)">简介</button>
+        </div>
+    </div>
+    <div id="map"></div>
+</div>
+
+<button onclick="goHome()">返回首页</button>
+
+<!-- 景点简介 modal -->
+<div id="descModal">
+    <div>
+        <span id="closeModal">✖</span>
+        <h3 id="modalTitle"></h3>
+        <p id="modalText"></p>
+    </div>
+</div>
+
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=b0bce62c2fc045d40875aab4c239fe31"></script>
+<script src="https://webapi.amap.com/ui/1.0/main.js"></script>
+
+<script>
+let map, markers=[], infoWindow, currentImgs=[], currentIndex=0;
+
+const spots = [
+    { name:"承德避暑山庄", pos:[117.93,40.97], imgs:["assets/承德避暑山庄1.jpg","assets/承德避暑山庄2.jpg","assets/承德避暑山庄3.jpg"], desc:"承德避暑山庄是清代皇帝避暑和处理政务的场所。",  customDesc: `各位朋友，欢迎来到清代皇帝的“顶级避暑豪宅”——承德避暑山庄！它可不只是个乘凉的后花园，更是当年皇帝的夏季办公总部+国家会客厅。
+
+整个山庄面积足足有8个故宫那么大，是中国现存最大的皇家园林。皇帝每年夏天都带着文武百官搬过来，一边避暑，一边处理朝政、接见边疆首领，相当于把半个朝廷都搬来了承德。
+
+最厉害的地方，就是把全中国的美景都搬了进来：湖区仿造江南水乡，有烟雨楼、金山亭，一步一景像在逛西湖；平原区模仿蒙古草原，开阔平坦，方便骑马打猎；山区则叠山理水，尽显北方山川的雄浑。逛一圈避暑山庄，等于快速环游大半个中国。
+
+别看宫殿区外表青砖灰瓦、看着低调朴素，其实内里十分讲究，这是皇帝特意营造的“勤俭人设”。而周围的外八庙更是藏着民族团结的大智慧，汉、藏、蒙多种建筑风格齐聚，妥妥的清代“国际外交名片”。
+
+夏天这里清凉舒适，秋天层林尽染，漫步在湖边林间，既能感受皇家气派，又能体会山水闲情，不愧是连皇帝都舍不得走的神仙地方。`
+  },
+    { name:"金山岭长城", pos:[117.24,40.68], imgs:["assets/金山岭长城1.jpg","assets/金山岭长城2.jpg","assets/金山岭长城3.jpg","assets/金山岭长城4.jpg"], desc:"金山岭长城以险峻著称，保存完整。", customDesc: `朋友们，说到长城，大家第一反应都是八达岭，但真正懂长城、爱拍长城的人，心里的白月光其实是这儿——金山岭长城！
+ 
+它被称作万里长城的颜值担当、摄影天花板，全长约10.5公里，却藏着67座造型不一样的敌楼，堪称“长城建筑博物馆”。别的长城是平直大气，金山岭偏偏走蜿蜒起伏、险峻优美路线，巨龙盘在山脊上，怎么拍都出片。
+ 
+当年戚继光主持重修这段长城时，可是下足了功夫。墙台、敌楼、烽燧、挡马墙、射击孔……设计得密密麻麻，攻防一体，堪称古代版“硬核防御系统”。敌楼有的两层、有的三层，有的带窗户、有的纯封闭，功能各不相同，看得人直呼古人太会了。
+ 
+这里最有名的就是望京楼和仙女楼。
+传说天气极好的时候，站在望京楼上，隐约能望见北京方向，所以得名；而仙女楼造型纤细秀美，像仙女立在山巅，名字自带仙气。很多摄影爱好者凌晨就爬上来，就为等一场金山岭日出，云海裹着长城，金光一照，壮观到让人失语。
+ 
+而且金山岭人少景静，没有拥挤的人潮，你可以慢悠悠走在斑驳城砖上，吹着山风，看群山连绵。每一块砖都晒过几百年的太阳，每一座敌楼都藏着边关故事。
+ 
+它没有过度修饰，保留了长城最原始、最沧桑的模样，粗犷又震撼。如果你想见识真正的长城雄姿，不看人山人海只看山河壮阔，那金山岭，绝对不会让你失望。`
+  },
+    { name:"娲皇宫", pos:[113.68,36.57], imgs:["assets/娲皇宫1.jpg","assets/娲皇宫2.jpg","assets/娲皇宫3.jpg"], desc:"娲皇宫供奉女娲，建筑古朴。", customDesc: `各位朋友，今天咱们要去打卡的，可是一座挂在悬崖上的神仙宫殿——娲皇宫！这里是传说中女娲娘娘炼石补天、抟土造人的地方，也被大家叫作“华夏祖庙”。
+ 
+远远望去你就会觉得震撼：整座建筑群紧贴着万丈悬崖而建，楼阁悬空、飞檐翘角，靠几棵立柱和几道铁索牵拉着，看着好像摇摇欲坠，实际上稳如泰山，历经几百年地震风雨都安然无恙，堪称中国古建筑里的“悬崖奇迹”。
+ 
+走进娲皇宫，处处都和女娲神话有关。大殿里供奉着慈祥端庄的女娲像，石壁上还保留着古代的摩崖刻经，字迹苍劲，是难得的文化瑰宝。民间一直流传，来这里祈福求平安、求顺遂都特别灵验，每年庙会更是人山人海，香火旺盛。
+ 
+站在高处往下望，群山连绵、云雾缭绕，仿佛真的置身于上古仙境。一边感叹古人逆天的建筑手艺，一边感受创世女神的文化底蕴，既惊险又神圣，越逛越有味道。
+ 
+可以说，不到娲皇宫，不算真正读懂女娲神话；不站在这悬空楼阁下，也体会不到什么叫鬼斧神工、天人合一。`
+  },
+    { name:"广府古城", pos:[115.48,38.88], imgs:["assets/广府古城1.jpg","assets/广府古城2.jpg","assets/广府古城3.jpg"], desc:"广府古城保存完整的明清古建筑风貌。", customDesc: `各位朋友，欢迎来到被誉为北国小江南+太极圣地的广府古城！这可不是普通的北方土城，而是一座泡在水里、飘着太极韵、藏着千年故事的“三水合一”宝地，距今足足有2600多年历史 。
+ 
+你看这城，四面被百米宽的护城河和4万多亩永年洼湿地紧紧抱着，城在水中、水绕城墙，夏天满塘荷花飘香，清风一吹，妥妥的北方版江南水乡。明代砖石城墙周长4.5公里，垛口密密麻麻，瓮城固若金汤，当年可是兵家必争的冀南重镇；隋末夏王窦建德曾在此建都，毛遂的封地曲梁也正是这里，“脱颖而出”的典故就从这儿传向天下。
+ 
+这里最牛的，是杨式、武式太极拳的双发源地！杨露禅当年“偷拳学艺”，凭着一身功夫闯京城成了“杨无敌”；武禹襄潜心钻研，创出了刚柔并济的武式太极。如今清晨的城墙下、广场上，白发老者和少年一起慢悠悠推手，连空气里都飘着太极的松弛感，2020年太极拳还入选了联合国非遗呢。
+ 
+城里的弘济桥也别错过，和赵州桥是同门兄弟，桥面上还嵌着三叶虫化石，堪称“天然地质标本”；广平府署古色古香，街边的缯肘、酥鱼等非遗美食，一口下去满是酱香和烟火气。
+ 
+不用去南方看水乡，不用去深山找武林，来广府古城，蹬辆自行车绕城看荷花，学两招太极推手，啃一块喷香的缯肘，在青砖黛瓦间听千年故事，这趟旅程，绝对惬意又难忘！`
+
+  },
+    { name:"山海关", pos:[119.75,40.01], imgs:["assets/山海关1.jpg","assets/山海关2.jpg","assets/山海关3.jpg"], desc:"山海关是长城东端重要关口。", customDesc: `各位朋友，现在我们站着的地方，就是大名鼎鼎的山海关——万里长城的东起点，名副其实的天下第一关！
+ 
+老话说：“两京锁钥无双地，万里长城第一关”。山海关北靠燕山，南临渤海，正好卡在山海之间，位置险到极致，自古就是兵家必争的咽喉要道。当年只要守住这扇“大门”，中原就安稳；一旦被攻破，天下都要震动。
+ 
+抬头看这座雄伟的箭楼，“天下第一关”五个大字气势拉满，笔力雄浑，越远看越震撼。城楼高十几米，加上高大的城墙、密集的垛口，往这一站，自带一种“一夫当关、万夫莫开”的霸气。
+ 
+这里的故事更是多到讲不完：
+徐达主持建关、戚继光镇守边防、吴三桂冲冠一怒为红颜、明清在此决战……每一块城砖都沾过历史的风烟。
+ 
+除了关城，长城从这儿一直伸进海里，那就是老龙头，像一条巨龙把头扎进渤海喝水，是全国唯一入海的长城，气势特别壮观。
+ 
+一边是雄关巍峨，一边是海浪滔滔，站在城楼上吹吹风，仿佛还能听见当年的号角声。这才是真正的：一关分内外，一墙定山河！`
+  },
+    { name:"普宁寺", pos:[117.93,40.91], imgs:["assets/普宁寺1.jpg","assets/普宁寺2.jpg"], desc:"普宁寺是著名佛教寺院。", customDesc: `各位朋友，欢迎来到承德普宁寺！当地人更爱叫它大佛寺，作为承德外八庙里保存最完整、地位最尊崇的一座，它可是乾隆皇帝一手打造的“皇家民族团结工程”，更是汉藏文化完美交融的艺术瑰宝。
+ 
+这座寺庙始建于乾隆二十年，建成耗时四年，取名“普宁”，寓意普天安宁、四海归一。当年乾隆平定准噶尔叛乱后，在此宴请蒙古四部王公，为了团结边疆、稳固江山，特意仿照西藏桑耶寺修建，既是皇家寺院，也是清代民族政策的实物见证。走进山门你会发现，普宁寺的布局特别有意思，前半段是标准的汉传寺庙格局，山门、天王殿、大雄宝殿依次排开，飞檐斗拱、雕梁画栋，满满的中原古风；跨过大雄宝殿，画风瞬间切换，红台白墙、金顶宝幢，四大部洲、八小部洲环绕而立，浓郁的藏式风情扑面而来，一寺之内，走遍汉藏两地，堪称立体的佛教曼陀罗世界。
+ 
+而整座寺庙的灵魂，就是大乘之阁内这尊吉尼斯世界纪录认证的世界最大金漆木雕千手千眼观世音菩萨。它通高27.21米，相当于9层楼，重达110吨，用松、柏、榆、椴、杉五种名贵木材一体雕琢，仅佛头就重5.4吨。大家仔细看，菩萨共有42只手臂，每只手心都有一只慧眼，按照佛教说法，42只手乘以25种法力，便成就了“千手千眼”，象征着观照世间、救苦救难。佛像周身贴金，神态慈悲庄严，两侧善财童子与龙女各高14米，相伴左右，抬头仰望，震撼感扑面而来，历经260多年依然完好如初，堪称东方木雕艺术的巅峰之作。
+ 
+作为北方最大的藏传佛教活动场所，普宁寺香火鼎盛，寺内壁画、彩绘、佛像件件都是国宝级文物，每年还会举办传统的羌姆法会，充满神秘的宗教氛围。它不仅是祈福圣地，更是一座活着的历史博物馆，一砖一瓦都在诉说着清代的盛世风华与民族交融的故事。`
+  },
+    { name:"西柏坡", pos:[114.01,38.91], imgs:["assets/西柏坡1.jpg","assets/西柏坡2.jpg"], desc:"西柏坡是中国革命历史重要遗址。", customDesc:  `各位朋友，欢迎来到太行山下这个不起眼的小山村——西柏坡！别看它只是滹沱河边的普通村落，这里可是被称作“新中国从这里走来”“世界最小的总指挥部”，中国命运，就定在这个小村庄里。
+ 
+当年党中央选中这里，一是三面环山易守难攻，二是水土肥美群众基础好。1948到1949年，领袖们就住在这些青砖灰瓦的农家小院里，土坯墙、旧木桌、煤油灯，条件简陋到不能再简陋，却在这里干出了惊天动地的大事。
+ 
+就在这几间小屋里，毛主席用408封电报，指挥了辽沈、淮海、平津三大战役，142天歼敌154万，平均一天打掉敌人一个师，堪称战争史上的奇迹。没有豪华会议室，没有先进设备，参谋们甚至用红蓝毛线代替铅笔在地图上标注战线，就在这样的艰苦条件下，彻底奠定了全国胜利的基础。
+ 
+这里还召开了党的七届二中全会，定下了“两个务必”的铁律：务必谦虚谨慎、不骄不躁，务必艰苦奋斗。领袖们吃酸菜、住土房、自己种菜，把“赶考”精神刻进骨子里。1949年3月，党中央从这里出发进京“赶考”，开启了建设新中国的伟大征程。
+ 
+如今走进西柏坡旧址，旧居、军委作战室、七届二中全会会址都原样保留，每一件老物件都在诉说：最伟大的胜利，从来不是靠奢华排场，而是靠初心、智慧与民心。这里没有金碧辉煌，却有着最震撼人心的力量，这就是西柏坡，一座永远的精神丰碑。`
+  },
+    { name:"清东陵", pos:[117.37,41.02], imgs:["assets/清东陵1.jpg","assets/清东陵2.jpg","assets/清东陵3.jpg"], desc:"清东陵为清代皇家陵寝群。", customDesc:`各位朋友，欢迎来到中国规模最大、风水最好、葬的皇帝最多、故事最狗血的皇家陵园——清东陵！这里不是普通的坟地，这是大清王朝花了247年修建的“皇家终极豪宅区”，占地80平方公里，比很多小城市都大！
+ 
+先给大家划重点：清东陵一共埋了5位皇帝、15位皇后、136位妃嫔，咱们熟悉的康熙、乾隆、慈禧，全都躺这儿。整个陵园北靠昌瑞山，南望金星山，左右群山环抱，风水师一句话总结：前有照、后有靠，代代出天子，子孙万代好。
+ 
+走进来第一眼，你会发现这里规矩特别大：所有陵墓以顺治的孝陵为中心，左右排开，神道笔直，石像生威武站岗，石人石马石兽一路排开，气势拉满，妥妥的皇家排面。
+ 
+但最有看点的，绝对是乾隆的裕陵和慈禧的定东陵，这两位堪称清代“丧葬界卷王”。
+ 
+先看乾隆裕陵，地宫一打开，所有人都惊呆了——这哪里是墓地，分明是地下佛国！四壁、头顶全是精美的佛教石雕，八大菩萨、四大金刚、五方佛、梵文经文，雕工精细到发丝都清晰，被誉为“石雕艺术的宝库”。乾隆一辈子风流潇洒，连死后都要把自己的地宫修成艺术品。
+ 
+再看慈禧太后的陵，那叫一个豪横到极致！她的大殿全用黄花梨木建造，这种木头现在一根都价值连城，她直接盖了一座殿！柱子、梁枋全贴金箔，用掉黄金上万两，亮得晃眼。更霸气的是，所有栏杆柱头都是凤在上、龙在下，把“老娘天下第一”写在了建筑上，在整个皇家陵寝里独一份。
+ 
+不过有意思的是，再牛的风水、再厚的黄金，也挡不住历史的车轮。清东陵后来遭遇过盗墓浩劫，无数珍宝流失，也让这座奢华的陵园多了几分沧桑与故事。
+ 
+今天我们走在神道上，脚下是百年青砖，眼前是红墙黄瓦，耳边是松涛阵阵，仿佛能听见大清王朝从盛世到落幕的声音。这里不仅是陵墓，更是一部看得见、摸得着的清代历史百科全书，每一块砖、每一片瓦，都藏着帝王将相、后宫风云的传奇！
+ 
+接下来，咱们就一起走进这座“大清皇家博物馆”，近距离看看乾隆的地下佛堂、慈禧的黄金大殿，感受真正的皇家气派！`
+  },
+    { name:"扁鹊祠", pos:[112.63,36.52], imgs:["assets/扁鹊祠1.jpg","assets/扁鹊祠2.jpg","assets/扁鹊祠3.jpg"], desc:"扁鹊祠纪念古代名医扁鹊。", customDesc:`各位朋友，欢迎来到河北内丘鹊山脚下的扁鹊祠！这里可不是普通的小庙，是中国历史最久、规模最大、保存最完整的神医纪念圣地，两千多年来，无数人来这儿打卡求医、沾沾医祖的福气，连课本里那个“讳疾忌医”的故事，主角就埋骨在此呢！
+ 
+咱们先认识下这位顶流神医：扁鹊本名秦越人，战国河北任丘人，可不是会变魔术的“鹊”，只因医术太神，大家用上古神医“扁鹊”称呼他。他首创望闻问切四诊法，堪称中医界的“诊断天花板”；还会分科看病，内科、外科、妇科、儿科、五官科样样精通，当年救活假死的虢国太子，一战封神，留下“起死回生”的传说；劝蔡桓公看病却被怼，最后预言成真，又成了“讳疾忌医”的名场面。可惜医术太高遭太医令李醯嫉妒，惨遭暗算，弟子们把他的头颅带回内丘安葬，才有了这座祠庙。
+ 
+走进祠里，步步是故事、件件有讲究。跨上回生桥，民间说走一遭祛病消灾，走两遭延年益寿，走三遭身心轻盈；桥对面山坡上的九龙柏，两千多岁的汉柏扎根石缝，传说是扁鹊的九个弟子化身，日夜守护着恩师。再去看元代风格的扁鹊殿，殿里的扁鹊塑像威严又亲切，四周壁画重现他行医天下的传奇；旁边的透灵碑、扁鹊墓，碑刻上的字迹还清晰，诉说着历代对他的尊崇。
+ 
+这里不仅有古建古柏，更是中医药文化的活化石。漫步碑廊，能看到历代名医的记载；周边的百草园里，种着当年扁鹊常用的草药。你可以试着辨认几种，感受下古人“一把草药、几根银针”治病救人的智慧。
+ 
+别觉得中医老古董，两千多年前扁鹊就提倡早发现早治疗，这理念放到现在也不过时！如今的扁鹊祠，古柏参天，九龙河静静流淌，没有喧嚣的叫卖，只有千年传承的医者仁心。
+ 
+接下来，咱们就一起过桥寻柏、入殿访贤，去触摸这位中医祖师爷留下的千年余温吧！`
+  }
+];
+
+function initMap() {
+    map = new AMap.Map('map',{zoom:8,center:spots[0].pos});
+    infoWindow = new AMap.InfoWindow({autoMove:true});
+    createMarkers();
+    highlightMarker(0);
+}
+
+function createMarkers() {
+    spots.forEach((s,index)=>{
+        let marker = new AMap.Marker({position:s.pos,map:map});
+        marker.on('mouseover',()=>{ highlightMarker(index); showInfo(index); });
+        marker.on('click',()=>focusSpot(index));
+        markers.push(marker);
+    });
+}
+
+function focusSpot(index){
+    map.setZoomAndCenter(10, spots[index].pos);
+}
+
+function highlightMarker(index){
+    markers.forEach((m,i)=>{
+        m.setIcon(new AMap.Icon({
+            size:new AMap.Size(i===index?40:25, i===index?50:34),
+            image:i===index?"https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png":"https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png"
+        }));
+    });
+}
+
+function showInfo(index){
+    const s = spots[index];
+    const content = `<div class="info-container">
+        <img id="infoImg" src="${s.imgs[0]}" class="info-img">
+        <div class="info-text">
+            <h3>${s.name}</h3>
+            <p>${s.desc}</p>
+            <button onclick="prevImg()">⬅️</button>
+            <button onclick="nextImg()">➡️</button>
+        </div>
+    </div>`;
+    infoWindow.setContent(content);
+    infoWindow.open(map, s.pos);
+    currentImgs = s.imgs;
+    currentIndex = 0;
+}
+
+function showSpotDesc(event,index){
+    event.stopPropagation();
+    const s = spots[index];
+    document.getElementById("modalTitle").innerText = s.name + "简介";
+    document.getElementById("modalText").innerText = s.customDesc;
+    document.getElementById("descModal").style.display = "flex";
+}
+
+document.getElementById("closeModal").onclick = function(){
+    document.getElementById("descModal").style.display = "none";
+}
+document.getElementById("descModal").onclick = function(e){
+    if(e.target.id === "descModal") this.style.display = "none";
+}
+
+function nextImg(){
+    currentIndex = (currentIndex+1)%currentImgs.length;
+    document.getElementById("infoImg").src=currentImgs[currentIndex];
+}
+
+function prevImg(){
+    currentIndex = (currentIndex-1+currentImgs.length)%currentImgs.length;
+    document.getElementById("infoImg").src=currentImgs[currentIndex];
+}
+
+window.onload = initMap;
+
+function goHome(){ window.location.href="/"; }
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIGC 文创生成</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+<div class="tool-page fade-in">
+    <h2>AIGC 文创生成</h2>
+    <p class="page-desc">输入你想要的文创设计主题，系统会生成对应的概念图。</p>
+
+    <input type="text" id="generatePrompt" placeholder="例如：以青铜鼎纹样设计一张现代文创海报">
+    <button onclick="generateImg()">开始生成</button>
+    <button onclick="goHome()">返回首页</button>
+
+    <p id="imageStatus" class="status-text"></p>
+    <div class="compare-wrap single-center">
+        <div class="img-card">
+            <h3>生成结果</h3>
+            <img id="img" alt="文创生成结果">
+        </div>
+    </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

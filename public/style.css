@@ -1,0 +1,225 @@
+body { 
+    margin: 0;
+    font-family: "Microsoft YaHei", sans-serif;
+    background: #0a0a0a;
+    color: white;
+    overflow-x: hidden;
+}
+
+/* 🌌 动态背景 */
+.bg-animation {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: url('assets/new-home-bg.jpg') no-repeat center center/cover;
+    z-index: -1;
+    opacity: 0.8; /* 可调节透明度 */
+    animation: none; /* 关闭原来的动态动画 */
+}
+
+@keyframes moveBg {
+    0% { transform: translate(0,0); }
+    50% { transform: translate(-25%, -25%); }
+    100% { transform: translate(0,0); }
+}
+
+/* 页面进入动画 */
+.fade-in {
+    animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    text-align: center;
+    padding-top: 60px;
+}
+
+.title {
+    font-size: 40px;
+    margin-bottom: 40px;
+    text-shadow: 0 0 20px #00f7ff;
+}
+
+/* 卡片 */
+.card {
+    width: 65%;
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 25px;
+    font-size: 22px;
+
+    border-radius: 15px;
+    cursor: pointer;
+
+    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.1);
+
+    border: 1px solid rgba(255,255,255,0.2);
+
+    transition: all 0.3s ease;
+}
+
+/* 悬浮 */
+.card:hover {
+    transform: translateY(-10px) scale(1.03);
+    box-shadow: 0 0 20px #00f7ff;
+}
+
+/* 点击波纹 */
+.card:active {
+    transform: scale(0.95);
+}
+
+/* 四种颜色光效 */
+.red:hover { box-shadow: 0 0 20px red; }
+.green:hover { box-shadow: 0 0 20px #00ff99; }
+.blue:hover { box-shadow: 0 0 20px #00ccff; }
+.yellow:hover { box-shadow: 0 0 20px gold; }
+
+/* 页面切换动画 */
+.fade-out {
+    animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+}
+
+/* 子页面 */
+.page {
+    text-align: center;
+    padding: 50px;
+    animation: fadeIn 0.8s ease;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    background: #00ccff;
+    color: white;
+    cursor: pointer;
+}
+
+.card.big {
+    width: 85%;
+    height: 180px;
+    margin: 25px auto;
+
+    background-size: cover;
+    background-position: center;
+
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+
+    transition: 0.4s;
+}
+
+.overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 26px;
+}
+
+.card.big:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px #00f7ff;
+}
+
+/* ================= 左侧导航栏背景图片 ================= */
+.sidebar {
+    width: 260px;                     /* 左侧导航宽度 */
+    height: 100%;                     /* 高度占满父容器 */
+    background-image: url('assets/燕赵文化地图导览.png'); /* 可更换成你自己的图片 */
+    background-size: cover;           /* 图片铺满整个导航 */
+    background-position: center center; /* 图片居中 */
+    background-repeat: no-repeat;     /* 防止重复平铺 */
+    color: white;                     /* 文本颜色 */
+    padding: 10px;
+}
+
+/* 左侧导航项 */
+.spot { 
+    padding:12px; 
+    cursor:pointer; 
+    border-bottom:1px solid rgba(255,255,255,0.2); 
+}
+.spot:hover { 
+    background: rgba(0,255,255,0.3); 
+}
+
+
+.panel {
+    width: min(720px, 92vw);
+    margin: 20px auto;
+    padding: 24px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(10px);
+}
+
+input[type="file"],
+input[type="text"],
+textarea {
+    width: min(560px, 85vw);
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
+    color: white;
+}
+
+textarea {
+    min-height: 140px;
+    resize: vertical;
+}
+
+.preview {
+    display: block;
+    width: min(420px, 85vw);
+    margin: 18px auto;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,247,255,0.25);
+}
+
+.result-card {
+    width: min(620px, 88vw);
+    margin: 16px auto;
+    padding: 18px;
+    border-radius: 14px;
+    text-align: left;
+    background: rgba(255,255,255,0.08);
+    line-height: 1.8;
+}
+
+.status {
+    min-height: 24px;
+    color: #8cecff;
+}
+
+.hidden {
+    display: none;
+}

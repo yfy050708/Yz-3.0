@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 图像修复</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+
+<div class="tool-page">
+    <h2>AI 智能修复</h2>
+    <p>上传一张破损、模糊或有缺失的文物图片，系统会尝试在原图基础上进行编辑修复。</p>
+
+    <input type="file" id="repairFile" accept="image/*">
+    <button onclick="repairImage()">开始修复</button>
+    <button onclick="goHome()">返回首页</button>
+
+    <p id="repairStatus"></p>
+
+    <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:20px;">
+        <div>
+            <h3>原图</h3>
+            <img id="repairPreview" style="max-width:400px; max-height:420px;">
+        </div>
+
+        <div>
+            <h3>修复结果</h3>
+            <img id="repairOutput" style="max-width:400px; max-height:420px;">
+        </div>
+    </div>
+
+    <p id="repairNote" style="margin-top:20px;"></p>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

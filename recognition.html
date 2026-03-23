@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 文物识别</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+<div class="tool-page fade-in">
+    <h2>AI 文物识别</h2>
+    <p class="page-desc">上传一张文物图片，系统会尝试识别名称、年代、类别、材质和判断依据。</p>
+
+    <div class="panel">
+        <input type="file" id="artifactFile" accept="image/*">
+        <button onclick="recognize()">开始识别</button>
+        <button onclick="goHome()">返回首页</button>
+    </div>
+
+    <p id="resultStatus" class="status-text"></p>
+
+    <!-- 左右布局容器 -->
+    <div class="recognition-container">
+        <!-- 左侧：图片预览 -->
+        <div class="img-card">
+            <h3>待识别图片</h3>
+            <img id="artifactPreview" alt="待识别图片预览">
+        </div>
+
+        <!-- 右侧：识别结果 -->
+        <div id="result" class="result-box"></div>
+    </div>
+
+    <!-- 下方：智能讲解区域 -->
+    <div id="explain-output" class="panel"></div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

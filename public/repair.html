@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 图像修复</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+  <h2>AI 图像修复</h2>
+
+  <div class="panel">
+    <input type="file" id="file" accept="image/*">
+    <button onclick="repair()">开始修复</button>
+    <p id="repairStatus" class="status"></p>
+    <img id="output" class="preview hidden" alt="修复结果">
+  </div>
+
+  <button onclick="history.back()">返回</button>
+  <script src="script.js"></script>
+</body>
+</html>
